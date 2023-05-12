@@ -1,0 +1,5 @@
+ignore_me/
+/not_ignored/single_ignored/
+_*
+*.ign
+/not_ignored/single_ignored.abc
