@@ -2,19 +2,14 @@ import logging
 from os import path, listdir, rmdir
 from typing import Optional
 
-from matcher import extract_matcher
+from matcher import extract_matcher, Matcher
 
 
 class Excluder:
 
-    def __init__(self, ignore_content: list[str], title: str):
+    def __init__(self, matcher: list[Matcher], title: str):
         self.logger = logging.getLogger(f'exclude-{title}')
-        self.matchers = []
-
-        for line in ignore_content:
-            matcher = extract_matcher(line)
-            if matcher is not None:
-                self.matchers.append(matcher)
+        self.matchers = matcher
 
     def find_excluded(self, target_path: str) -> Optional[list[str]]:
         if not path.exists(target_path):
@@ -55,18 +50,24 @@ class Excluder:
 
     @staticmethod
     def __get_excluding_content_lines_from_file__(ignore_file_path: str) -> list[str]:
-        ignoreContent = []
+        ignore_content = []
         if not path.exists(ignore_file_path):
-            return ignoreContent
+            return ignore_content
 
         with open(ignore_file_path, 'r') as ignoreFile:
             for line in ignoreFile:
                 line = line.strip()
                 if line != '' and not line.startswith('#'):
-                    ignoreContent.append(line)
-        return ignoreContent
+                    ignore_content.append(line)
+        return ignore_content
 
     @staticmethod
     def build(excluding_template_file: str, title: str = 'exclude'):
         lines = Excluder.__get_excluding_content_lines_from_file__(excluding_template_file)
-        return Excluder(lines, title)
+        matchers = []
+        for line in lines:
+            matcher = extract_matcher(line)
+            if matcher is not None:
+                matchers.append(matcher)
+
+        return Excluder(matchers, title)
